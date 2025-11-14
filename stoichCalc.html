@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stoichiometry Step Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for better aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .card {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .step-indicator {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="min-h-screen p-4 sm:p-8 flex justify-center items-start">
+        <div class="w-full max-w-4xl space-y-8">
+
+            <!-- Title Header -->
+            <header class="text-center">
+                <h1 class="text-4xl font-extrabold text-blue-800 tracking-tight">Stoichiometry Step Builder</h1>
+                <p class="mt-2 text-lg text-gray-600">Master the Mole Highway one step at a time.</p>
+            </header>
+
+            <!-- Main Application Card -->
+            <div class="bg-white p-6 md:p-10 rounded-xl card border-t-4 border-blue-500">
+
+                <div id="setup-panel" class="space-y-6">
+                    <h2 class="text-2xl font-semibold text-gray-700 border-b pb-2 mb-4">1. Define Your Problem</h2>
+
+                    <p class="text-sm text-gray-500 italic bg-blue-50 p-3 rounded">
+                        **Tip:** Use the reaction $2\text{H}_2 + \text{O}_2 \to 2\text{H}_2\text{O}$ as an example. Set A = $\text{H}_2$ and B = $\text{H}_2\text{O}$.
+                    </p>
+
+                    <!-- Reaction Parameters -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Given (Substance A) -->
+                        <div class="space-y-4 p-4 bg-gray-50 rounded-lg">
+                            <h3 class="font-bold text-lg text-gray-700">Given Reactant (A)</h3>
+                            <div class="input-group">
+                                <label for="formulaA" class="block text-sm">Formula (e.g., $H_2$):</label>
+                                <input type="text" id="formulaA" value="H2" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="input-group">
+                                <label for="coeffA" class="block text-sm">Coefficient (from balanced equation):</label>
+                                <input type="number" id="coeffA" value="2" min="1" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="input-group">
+                                <label for="molarMassA" class="block text-sm">Molar Mass (g/mol):</label>
+                                <input type="number" id="molarMassA" value="2.02" step="0.01" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Needed (Substance B) -->
+                        <div class="space-y-4 p-4 bg-gray-50 rounded-lg">
+                            <h3 class="font-bold text-lg text-gray-700">Needed Product (B)</h3>
+                            <div class="input-group">
+                                <label for="formulaB" class="block text-sm">Formula (e.g., $H_2O$):</label>
+                                <input type="text" id="formulaB" value="H2O" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="input-group">
+                                <label for="coeffB" class="block text-sm">Coefficient (from balanced equation):</label>
+                                <input type="number" id="coeffB" value="2" min="1" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                            <div class="input-group">
+                                <label for="molarMassB" class="block text-sm">Molar Mass (g/mol):</label>
+                                <input type="number" id="molarMassB" value="18.02" step="0.01" class="w-full mt-1 p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Given Quantity -->
+                        <div class="space-y-4 p-4 bg-blue-100 rounded-lg flex flex-col justify-center">
+                            <h3 class="font-bold text-lg text-blue-800">Given Quantity</h3>
+                            <div class="input-group">
+                                <label for="givenMass" class="block text-sm">Given Mass of A (in grams):</label>
+                                <input type="number" id="givenMass" value="10.0" step="0.1" class="w-full mt-1 p-2 border border-blue-500 rounded focus:ring-blue-600 focus:border-blue-600">
+                            </div>
+                            <button id="start-btn" onclick="startCalculation()" class="w-full py-3 mt-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-150 shadow-lg">
+                                Start Calculation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculation Panel -->
+                <div id="calc-panel" class="hidden space-y-6 mt-6">
+                    <h2 class="text-2xl font-semibold text-gray-700 border-b pb-2">2. The Mole Highway</h2>
+
+                    <!-- Step Visualization -->
+                    <div class="flex justify-between items-center text-center text-sm font-medium text-gray-500">
+                        <div id="step-1-status" class="step-indicator p-2 rounded-full border-2 border-dashed border-gray-300 w-1/4">Grams A</div>
+                        <span class="w-1/6 text-xl text-blue-500">&rarr;</span>
+                        <div id="step-2-status" class="step-indicator p-2 rounded-full border-2 border-dashed border-gray-300 w-1/4">Moles A $\leftrightarrow$ Moles B</div>
+                        <span class="w-1/6 text-xl text-blue-500">&rarr;</span>
+                        <div id="step-3-status" class="step-indicator p-2 rounded-full border-2 border-dashed border-gray-300 w-1/4">Grams B</div>
+                    </div>
+
+                    <!-- Current Prompt Area -->
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-lg">
+                        <p id="prompt-text" class="text-lg font-medium"></p>
+                    </div>
+
+                    <!-- Answer Input -->
+                    <div class="flex gap-4 items-center">
+                        <input type="number" id="answer-input" step="0.001" placeholder="Enter your answer (3 significant figures)" class="flex-grow p-3 border-2 border-gray-300 rounded-lg text-lg focus:ring-green-500 focus:border-green-500">
+                        <button id="check-btn" onclick="checkAnswer()" class="py-3 px-6 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition duration-150 shadow-md">
+                            Check Answer
+                        </button>
+                    </div>
+
+                    <!-- Feedback Area -->
+                    <div id="feedback" class="mt-4 text-center p-3 rounded-lg font-medium hidden"></div>
+
+                </div>
+
+                <!-- Final Result/Wrap-up Panel -->
+                <div id="result-panel" class="hidden space-y-6 mt-6 p-6 bg-green-50 rounded-xl border-t-4 border-green-500">
+                    <h2 class="text-3xl font-bold text-green-700 text-center">🎉 Calculation Complete! 🎉</h2>
+                    <div id="final-summary" class="text-lg text-gray-700"></div>
+                    <p class="text-sm italic text-gray-600">
+                        This final mass of <span id="final-formula-b" class="font-bold"></span> is your **Theoretical Yield**.
+                    </p>
+                    <button onclick="document.location.reload()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-150">
+                        Start a New Problem
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state variables
+        let state = {
+            step: 0, // 0: Setup, 1: Grams A -> Moles A, 2: Moles A -> Moles B, 3: Moles B -> Grams B
+            data: {},
+            theoreticalYield: 0,
+            tolerance: 0.02, // 2% tolerance for rounding errors in student input
+            currentStepAnswer: 0,
+        };
+
+        // --- Utility Functions ---
+
+        /** Calculates the answer for the current step. */
+        function calculateAnswer(step, data) {
+            const { givenMass, molarMassA, coeffA, coeffB, molarMassB } = data;
+
+            // Step 1: Grams A -> Moles A
+            const molesA = givenMass / molarMassA;
+            if (step === 1) return molesA;
+
+            // Step 2: Moles A -> Moles B
+            const molesB = molesA * (coeffB / coeffA);
+            if (step === 2) return molesB;
+
+            // Step 3: Moles B -> Grams B (Theoretical Yield)
+            const gramsB = molesB * molarMassB;
+            if (step === 3) return gramsB;
+
+            return 0; // Should not happen
+        }
+
+        /** Formats a number to a fixed number of decimal places or significant figures. */
+        function roundToSF(num, sf = 3) {
+            if (num === 0) return 0;
+            const multiplier = Math.pow(10, sf - Math.floor(Math.log10(Math.abs(num))) - 1);
+            return Math.round(num * multiplier) / multiplier;
+        }
+
+        /** Displays feedback to the user. */
+        function showFeedback(message, type = 'success') {
+            const feedbackEl = document.getElementById('feedback');
+            feedbackEl.textContent = message;
+            feedbackEl.className = 'mt-4 text-center p-3 rounded-lg font-medium';
+            feedbackEl.classList.remove('hidden');
+
+            if (type === 'success') {
+                feedbackEl.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'error') {
+                feedbackEl.classList.add('bg-red-100', 'text-red-700');
+            }
+        }
+
+        /** Updates the step visualization elements. */
+        function updateStepStatus(step) {
+            document.querySelectorAll('.step-indicator').forEach(el => {
+                el.classList.remove('bg-blue-200', 'border-blue-500', 'text-blue-800');
+                el.classList.add('border-gray-300', 'text-gray-500');
+            });
+
+            if (step === 1) {
+                document.getElementById('step-1-status').classList.add('bg-blue-200', 'border-blue-500', 'text-blue-800');
+            } else if (step === 2) {
+                document.getElementById('step-2-status').classList.add('bg-blue-200', 'border-blue-500', 'text-blue-800');
+            } else if (step === 3) {
+                document.getElementById('step-3-status').classList.add('bg-blue-200', 'border-blue-500', 'text-blue-800');
+            }
+        }
+
+        // --- Main App Logic ---
+
+        /** Initializes the calculation and moves to the first step. */
+        function startCalculation() {
+            try {
+                // 1. Gather inputs
+                state.data = {
+                    formulaA: document.getElementById('formulaA').value.trim(),
+                    coeffA: parseFloat(document.getElementById('coeffA').value),
+                    molarMassA: parseFloat(document.getElementById('molarMassA').value),
+                    givenMass: parseFloat(document.getElementById('givenMass').value),
+                    formulaB: document.getElementById('formulaB').value.trim(),
+                    coeffB: parseFloat(document.getElementById('coeffB').value),
+                    molarMassB: parseFloat(document.getElementById('molarMassB').value),
+                };
+
+                // Simple validation
+                for (const key in state.data) {
+                    if (state.data[key] === null || state.data[key] === undefined || (typeof state.data[key] === 'number' && isNaN(state.data[key]))) {
+                        showFeedback(`Please ensure all setup fields are filled with valid numbers.`, 'error');
+                        return;
+                    }
+                }
+
+                if (!state.data.formulaA || !state.data.formulaB) {
+                    showFeedback(`Please enter valid chemical formulas.`, 'error');
+                    return;
+                }
+
+                // 2. Hide setup, show calculation panel
+                document.getElementById('setup-panel').classList.add('hidden');
+                document.getElementById('calc-panel').classList.remove('hidden');
+                document.getElementById('feedback').classList.add('hidden');
+                document.getElementById('answer-input').value = '';
+
+                // 3. Start at Step 1
+                state.step = 1;
+                nextStep();
+
+            } catch (e) {
+                showFeedback(`An error occurred during setup: ${e.message}`, 'error');
+            }
+        }
+
+        /** Moves the user to the next step, updates the prompt, and sets the answer. */
+        function nextStep() {
+            const { formulaA, coeffA, molarMassA, givenMass, formulaB, coeffB, molarMassB } = state.data;
+            const promptEl = document.getElementById('prompt-text');
+            const answerInput = document.getElementById('answer-input');
+
+            // --- FIX 2: Correctly handle the final step transition ---
+            if (state.step > 3) {
+                // FINISH: We rely on the theoretical yield saved in checkAnswer (Step 3)
+                showResults();
+                return;
+            }
+            // --------------------------------------------------------
+
+            // Set the correct answer for the next step (using higher precision for calculation)
+            state.currentStepAnswer = calculateAnswer(state.step, state.data);
+
+            updateStepStatus(state.step);
+
+            if (state.step === 1) {
+                // STEP 1: Grams A -> Moles A
+                promptEl.innerHTML = `**Step 1:** You are given ${givenMass} g of ${formulaA}. Convert this mass to moles of ${formulaA}.<br>
+                                      *HINT:* Use the molar mass of ${formulaA} (${molarMassA} g/mol).`;
+                answerInput.placeholder = `Enter moles of ${formulaA} (e.g., ${roundToSF(state.currentStepAnswer, 3)})`;
+            } else if (state.step === 2) {
+                // STEP 2: Moles A -> Moles B
+                const molesA = calculateAnswer(1, state.data);
+                promptEl.innerHTML = `**Step 2 (The Bridge):** You have ${roundToSF(molesA, 4)} moles of ${formulaA}. Convert this to moles of ${formulaB}.<br>
+                                      *HINT:* Use the mole ratio from the balanced equation: ${coeffA} mol ${formulaA} to ${coeffB} mol ${formulaB}.`;
+                answerInput.placeholder = `Enter moles of ${formulaB} (e.g., ${roundToSF(state.currentStepAnswer, 3)})`;
+            } else if (state.step === 3) {
+                // STEP 3: Moles B -> Grams B
+                const molesB = calculateAnswer(2, state.data);
+                promptEl.innerHTML = `**Step 3:** You have ${roundToSF(molesB, 4)} moles of ${formulaB}. Convert this to the final mass in grams.<br>
+                                      *HINT:* Use the molar mass of ${formulaB} (${molarMassB} g/mol). This is your Theoretical Yield!`;
+                answerInput.placeholder = `Enter grams of ${formulaB} (e.g., ${roundToSF(state.currentStepAnswer, 3)})`;
+            }
+
+            // Clear input for the next step
+            answerInput.value = '';
+            document.getElementById('feedback').classList.add('hidden');
+        }
+
+        /** Checks the user's answer against the calculated correct answer. */
+        function checkAnswer() {
+            const userInput = parseFloat(document.getElementById('answer-input').value);
+            const correctValue = state.currentStepAnswer;
+
+            if (isNaN(userInput)) {
+                showFeedback("Please enter a number.", 'error');
+                return;
+            }
+
+            // Check if the input is within the allowed tolerance (e.g., 2% of the correct answer)
+            const absoluteDifference = Math.abs(userInput - correctValue);
+            const relativeTolerance = Math.abs(correctValue) * state.tolerance;
+
+            if (absoluteDifference <= relativeTolerance || absoluteDifference <= 0.001) {
+                showFeedback(`Correct! The value is approximately ${roundToSF(correctValue, 4)}. Moving to the next step.`, 'success');
+
+                // --- FIX 1: Store the final theoretical yield when step 3 is complete ---
+                if (state.step === 3) {
+                    state.theoreticalYield = correctValue;
+                }
+                // ---------------------------------------------------------------------
+
+                // Advance state after a brief delay for the feedback to be read
+                setTimeout(() => {
+                    state.step++;
+                    nextStep();
+                }, 1500);
+
+            } else {
+                showFeedback("That value is incorrect. Check your setup and calculations, paying attention to significant figures and rounding.", 'error');
+            }
+        }
+
+        /** Displays the final results panel. */
+        function showResults() {
+            document.getElementById('calc-panel').classList.add('hidden');
+            document.getElementById('result-panel').classList.remove('hidden');
+
+            // Now uses the correctly saved state.theoreticalYield
+            const finalMass = roundToSF(state.theoreticalYield, 4);
+            const formulaB = state.data.formulaB;
+
+            document.getElementById('final-summary').innerHTML = `
+                Based on your starting quantity of ${state.data.givenMass} g of ${state.data.formulaA}, the **Theoretical Yield** of ${formulaB} is:
+                <p class="text-5xl font-extrabold text-green-600 my-4">${finalMass} g</p>
+            `;
+            document.getElementById('final-formula-b').textContent = formulaB;
+        }
+
+        // Example for Percent Yield and Limiting Reactant (Conceptual Conclusion)
+        // This is where you would introduce the next concepts.
+        // If you were to continue the app, you'd add steps for a second reactant and a separate % yield panel.
+
+    </script>
+</body>
+</html>
